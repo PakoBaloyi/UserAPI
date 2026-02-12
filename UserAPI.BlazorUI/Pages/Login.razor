@@ -1,0 +1,37 @@
+﻿@page "/login"
+@using UserAPI.BlazorUI.Services
+@inject HttpClient Http
+@inject TokenStorage TokenStorage
+@inject NavigationManager Nav
+
+
+<h3>Login</h3>
+
+<button @onclick="PerformLogin">Get Token</button>
+
+@if (!string.IsNullOrEmpty(token))
+{
+    <p><strong>Token saved:</strong> @token</p>
+}
+
+@code {
+    private string token = string.Empty;
+
+    private async Task PerformLogin()
+    {
+        var response = await Http.GetFromJsonAsync<TokenResponse>("auth/generate");
+        if (response != null)
+        {
+            token = response.Token;
+            await TokenStorage.SaveTokenAsync(token);
+
+
+            Nav.NavigateTo("/dashboard", true);
+        }
+    }
+
+    public class TokenResponse
+    {
+        public string Token { get; set; } = string.Empty;
+    }
+}

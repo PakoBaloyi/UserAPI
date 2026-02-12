@@ -1,0 +1,225 @@
+﻿@page "/users"
+@using UserApi.Application.DTO
+@using UserApi.Shared.DTO
+@inject HttpClient Http
+
+<h3>User Management</h3>
+
+<button class="btn btn-primary mb-3" @onclick="ShowAddUserModal">Add User</button>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>FullName</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (users is null)
+        {
+            <tr><td colspan="5">Loading...</td></tr>
+        }
+        else
+        {
+            @foreach (var user in users)
+            {
+                <tr>
+                    <td>@user.Id</td>
+                    <td>@user.Username</td>
+                    <td>@user.Email</td>
+                    <td>@user.FullName</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" @onclick="() => ShowUpdateUserModal(user)">Update</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteUser(user.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<!-- Add User Modal -->
+@if (showAddModal)
+{
+    <div class="modal show d-block" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add User</h5>
+                    <button type="button" class="btn-close" @onclick="CloseAddUserModal"></button>
+                </div>
+                <div class="modal-body">
+                    <input class="form-control mb-2" placeholder="Username" @bind="newUser.Username" />
+                    <input class="form-control mb-2" placeholder="Email" @bind="newUser.Email" />
+                    <input class="form-control mb-2" placeholder="Name" @bind="newUser.Name" />
+                    <input class="form-control mb-2" placeholder="LastName" @bind="newUser.LastName" />
+
+                    <div>
+                        @if (groups is not null)
+                        {
+                            @foreach (var g in groups)
+                            {
+                                <div class="form-check">
+                                    <input type="checkbox"
+                                           class="form-check-input"
+                                           value="@g.Id"
+                                           checked="@( newUser.GroupIds?.Contains(g.Id) == true )"
+                                           @onchange="e => ToggleGroupSelection(e, g.Id)" />
+                                    <label class="form-check-label">@g.Name</label>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseAddUserModal">Cancel</button>
+                    <button class="btn btn-primary" @onclick="AddUser">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Update User Modal -->
+@if (showUpdateModal)
+{
+    <div class="modal show d-block" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Update User</h5>
+                    <button type="button" class="btn-close" @onclick="CloseUpdateUserModal"></button>
+                </div>
+                <div class="modal-body">
+                    <input class="form-control mb-2" placeholder="Username" @bind="selectedUser.Username" />
+                    <input class="form-control mb-2" placeholder="Email" @bind="selectedUser.Email" />
+                    <input class="form-control mb-2" placeholder="Name" @bind="selectedUser.Name" />
+                    <input class="form-control mb-2" placeholder="LastName" @bind="selectedUser.LastName" />
+                    <div>
+                        @if (groups is not null)
+                        {
+                            @foreach (var g in groups)
+                            {
+                                <div class="form-check">
+                                    <input type="checkbox"
+                                           class="form-check-input"
+                                           value="@g.Id"
+                                           checked="@( (selectedUser.GroupIds?.Contains(g.Id)) == true )"
+                                           @onchange="e => ToggleGroupSelection(e, g.Id)" />
+                                    <label class="form-check-label">@g.Name</label>
+                                </div>
+                            }
+                        }
+                    </div>
+                    <div class="form-check mb-2">
+                        <InputCheckbox class="form-check-input"
+                                       @bind-Value="selectedUser.IsActive" />
+                        <label class="form-check-label">
+                            Is Active
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseUpdateUserModal">Cancel</button>
+                    <button class="btn btn-primary" @onclick="UpdateUser">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<UserDto>? users;
+    private List<GroupDto>? groups;
+
+    private bool showAddModal = false;
+    private bool showUpdateModal = false;
+
+    private CreateUserDto newUser = new();
+    private UpdateUserDto selectedUser = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await Http.GetFromJsonAsync<List<UserDto>>("users/GetAllUsers");
+        groups = await Http.GetFromJsonAsync<List<GroupDto>>("users/get-all-groups");
+    }
+
+    private void ShowAddUserModal()
+    {
+        newUser = new CreateUserDto();
+        showAddModal = true;
+    }
+    private void CloseAddUserModal() => showAddModal = false;
+
+    private void ShowUpdateUserModal(UserDto user)
+    {
+        selectedUser = new UpdateUserDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            Name = user.Name,
+            LastName = user.LastName,
+            GroupIds = user.GroupIds?.ToList() ?? new List<int>(),
+            IsActive = user.IsActive
+        };
+        showUpdateModal = true;
+    }
+    private void CloseUpdateUserModal() => showUpdateModal = false;
+
+    private async Task AddUser()
+    {
+        var response = await Http.PostAsJsonAsync("users/add-new-user", newUser);
+        if (response.IsSuccessStatusCode)
+        {
+            users = await Http.GetFromJsonAsync<List<UserDto>>("users/GetAllUsers");
+            CloseAddUserModal();
+        }
+    }
+
+    private async Task UpdateUser()
+    {
+        var response = await Http.PutAsJsonAsync("users/update-user", selectedUser);
+        if (response.IsSuccessStatusCode)
+        {
+            users = await Http.GetFromJsonAsync<List<UserDto>>("users/GetAllUsers");
+            CloseUpdateUserModal();
+        }
+    }
+
+    private async Task DeleteUser(int id)
+    {
+        var response = await Http.DeleteAsync($"users/delete-user?id={id}");
+        if (response.IsSuccessStatusCode)
+        {
+            users = await Http.GetFromJsonAsync<List<UserDto>>("users/GetAllUsers");
+        }
+    }
+
+    private void ToggleGroupSelection(ChangeEventArgs e, int groupId)
+    {
+        bool isChecked = e.Value is bool b && b || (e.Value?.ToString()?.ToLower() == "on");
+
+        var list = showUpdateModal ? selectedUser.GroupIds : newUser.GroupIds;
+
+        if (list is null)
+        {
+            if (showUpdateModal) selectedUser.GroupIds = new List<int>();
+            else newUser.GroupIds = new List<int>();
+            list = showUpdateModal ? selectedUser.GroupIds : newUser.GroupIds;
+        }
+
+        if (isChecked)
+        {
+            if (!list.Contains(groupId))
+                list.Add(groupId);
+        }
+        else
+        {
+            list.Remove(groupId);
+        }
+    }
+}

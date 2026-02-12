@@ -16,10 +16,21 @@ namespace UserApi.Application.Services
         public async Task<ServiceResult<UserDto>> GetUserAsync(int id)
         {
             var user = await _repository.GetByIdAsync(id);
-            if (user == null)
-                return ServiceResult<UserDto>.Fail("User not found");
+            if (user == null) return ServiceResult<UserDto>.Fail("User not found");
 
-            return ServiceResult<UserDto>.Ok(_mapper.Map<UserDto>(user));
+            var dto = new UserDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                FullName = user.Name + " "  + user.LastName,
+                Name = user.Name,
+                LastName = user.LastName,
+                IsActive = user.IsActive,
+                GroupIds = user.Groups.Select(g => g.Id).ToList()
+            };
+
+            return ServiceResult<UserDto>.Ok(dto);
         }
 
         public async Task<ServiceResult<IEnumerable<UserDto>>> GetAllUsersAsync()
@@ -49,8 +60,6 @@ namespace UserApi.Application.Services
 
             return ServiceResult<UserDto>.Ok(_mapper.Map<UserDto>(user));
         }
-
-
 
         public async Task<ServiceResult<bool>> UpdateUserAsync(UpdateUserDto dto)
         {

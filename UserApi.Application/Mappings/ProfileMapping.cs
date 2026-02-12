@@ -11,11 +11,10 @@ namespace UserApi.Application.Mappings
             CreateMap<User, UserDto>()
                 .ForMember(dest => dest.FullName,
                            opt => opt.MapFrom(src => $"{src.Name} {src.LastName}"))
-                .ForMember(dest => dest.Groups,
-                           opt => opt.MapFrom(src => src.Groups.Select(g => g.Name)));
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+                .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.LastName));
             CreateMap<CreateUserDto, User>();
             CreateMap<UpdateUserDto, User>();
         }
     }
-
 }

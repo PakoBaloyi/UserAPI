@@ -8,9 +8,10 @@ namespace UserAPI.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class UsersController(IUserService service) : ControllerBase
+    public class UsersController(IUserService service, IGroupService groupService) : ControllerBase
     {
         private readonly IUserService _service = service;
+        private readonly IGroupService _groupService = groupService;    
 
         [HttpGet("GetAllUsers")]
         public async Task<IActionResult> GetAllUsers()
@@ -60,6 +61,13 @@ namespace UserAPI.Controllers
         public async Task<IActionResult> GetUserCountsPerGroup()
         {
             var result = await _service.GetUserCountsPerGroupAsync();
+            return result.Success ? Ok(result.Data) : BadRequest(result.ErrorMessage);
+        }
+
+        [HttpGet("get-all-groups")]
+        public async Task<IActionResult> GetAllGroups()
+        {
+            var result = await _groupService.GetAllGroupsAsync();
             return result.Success ? Ok(result.Data) : BadRequest(result.ErrorMessage);
         }
     }

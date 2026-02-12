@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using UserApi.Application.DTO;
 using UserApi.Domain.Entities;
 using UserApi.Infrastructure.Data;
 using UserApi.Infrastructure.Interfaces;
@@ -18,10 +19,21 @@ namespace UserApi.Infrastructure.Repositories
             return user;
         }
 
-        public async Task<IEnumerable<User>> GetAllAsync()
+        public async Task<IEnumerable<UserDto>> GetAllAsync()
         {
             var users = await _context.Users
                 .Include(u => u.Groups)
+                .Select(u => new UserDto
+                {
+                    Id = u.Id,
+                    Username = u.Username,
+                    Email = u.Email,
+                    FullName = u.Name + " " + u.LastName,
+                    Name = u.Name,  
+                    LastName = u.LastName,
+                    IsActive = u.IsActive,
+                    GroupIds = u.Groups.Select(g => g.Id).ToList()
+                })
                 .ToListAsync();
 
             return users;

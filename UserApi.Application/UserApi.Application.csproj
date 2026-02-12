@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\UserApi.Domain\UserApi.Domain.csproj" />
     <ProjectReference Include="..\UserApi.Infrastructure\UserApi.Infrastructure.csproj" />
+    <ProjectReference Include="..\UserApi.Shared\UserApi.Shared.csproj" />
   </ItemGroup>
 
 </Project>

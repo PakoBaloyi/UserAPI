@@ -1,0 +1,63 @@
+﻿@page "/dashboard"
+@inject HttpClient Http
+
+<h3>User Dashboard</h3>
+
+<div class="row mb-4">
+
+    <div class="col-md-3">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Total Users</h5>
+                <p class="card-text">@totalUsers</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-9">
+        <div class="card bg-light mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Users per Group</h5>
+                <div class="row">
+                    @if (groupCounts != null)
+                    {
+                        @foreach (var kvp in groupCounts)
+                        {
+                            <div class="col-md-4 mb-2">
+                                <div class="card border-secondary">
+                                    <div class="card-body">
+                                        <strong>@kvp.Key</strong>: @kvp.Value
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private int totalUsers;
+    private IDictionary<string, int>? groupCounts;
+    private string message = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboard();
+    }
+
+    private async Task LoadDashboard()
+    {
+        try
+        {
+            totalUsers = await Http.GetFromJsonAsync<int>("users/get-user-count");
+            groupCounts = await Http.GetFromJsonAsync<IDictionary<string, int>>("users/get-user-counts-per-group");
+        }
+        catch (Exception ex)
+        {
+            message = $"Error loading dashboard: {ex.Message}";
+        }
+    }
+}
