@@ -3,7 +3,7 @@ using UserApi.Domain.Entities;
 using UserApi.Infrastructure.Data;
 using UserApi.Infrastructure.Interfaces;
 
-namespace UserApi.Infrastructure.Services
+namespace UserApi.Infrastructure.Repositories
 {
     public class UserRepository(UserDbContext context) : IUserRepository
     {

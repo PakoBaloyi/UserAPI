@@ -7,10 +7,11 @@ using UserApi.Infrastructure.Interfaces;
 
 namespace UserApi.Application.Services
 {
-    public class UserService(IUserRepository repository, IMapper mapper) : IUserService
+    public class UserService(IUserRepository repository, IMapper mapper, IGroupRepository groupRepository) : IUserService
     {
         private readonly IUserRepository _repository = repository;
         private readonly IMapper _mapper = mapper;
+        private readonly IGroupRepository _groupRepository = groupRepository;
 
         public async Task<ServiceResult<UserDto>> GetUserAsync(int id)
         {
@@ -29,11 +30,27 @@ namespace UserApi.Application.Services
 
         public async Task<ServiceResult<UserDto>> AddUserAsync(CreateUserDto dto)
         {
-            var user = _mapper.Map<User>(dto);
-            user.IsActive = true; 
+            var user = new User
+            {
+                Username = dto.Username,
+                Email = dto.Email,
+                Name = dto.Name,
+                LastName = dto.LastName,
+                IsActive = true
+            };
+
+            if (dto.GroupIds.Count != 0)
+            {
+                var groups = await _groupRepository.GetByIdsAsync(dto.GroupIds);
+                user.Groups = groups.ToList();
+            }
+
             await _repository.AddAsync(user);
+
             return ServiceResult<UserDto>.Ok(_mapper.Map<UserDto>(user));
         }
+
+
 
         public async Task<ServiceResult<bool>> UpdateUserAsync(UpdateUserDto dto)
         {
@@ -42,6 +59,22 @@ namespace UserApi.Application.Services
                 return ServiceResult<bool>.Fail("User not found");
 
             _mapper.Map(dto, user);
+
+            if (dto.GroupIds != null && dto.GroupIds.Count != 0)
+            {
+                user.Groups.Clear();
+
+                foreach (var groupId in dto.GroupIds)
+                {
+                    var groups = await _groupRepository.GetByIdsAsync([groupId]);
+                    var group = groups.FirstOrDefault();
+                    if (group != null)
+                    {
+                        user.Groups.Add(group);
+                    }
+                }
+            }
+
             await _repository.UpdateAsync(user);
             return ServiceResult<bool>.Ok(true);
         }

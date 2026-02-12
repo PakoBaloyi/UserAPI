@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using UserApi.Application.DTO;
 using UserApi.Application.Interfaces;
 
 namespace UserAPI.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class UsersController(IUserService service) : ControllerBase
@@ -17,8 +19,8 @@ namespace UserAPI.Controllers
             return result.Success ? Ok(result.Data) : BadRequest(result.ErrorMessage);
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetUser(int id)
+        [HttpGet("get-user-by-id")]
+        public async Task<IActionResult> GetUserById(int id)
         {
             var result = await _service.GetUserAsync(id);
             return result.Success ? Ok(result.Data) : NotFound(result.ErrorMessage);
@@ -29,18 +31,18 @@ namespace UserAPI.Controllers
         {
             var result = await _service.AddUserAsync(dto);
             return result.Success
-                ? CreatedAtAction(nameof(GetUser), new { id = result.Data!.Id }, result.Data)
+                ? CreatedAtAction(nameof(GetUserById), new { id = result.Data!.Id }, result.Data)
                 : BadRequest(result.ErrorMessage);
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("update-user")]
         public async Task<IActionResult> UpdateUser([FromBody] UpdateUserDto dto)
         {
             var result = await _service.UpdateUserAsync(dto);
             return result.Success ? NoContent() : NotFound(result.ErrorMessage);
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("delete-user")]
         public async Task<IActionResult> DeleteUser(int id)
         {
             var result = await _service.DeleteUserAsync(id);
